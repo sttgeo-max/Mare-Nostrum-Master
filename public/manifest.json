@@ -1,0 +1,21 @@
+{
+  "name": "Mare Nostrum II: Imperium",
+  "short_name": "Mare Nostrum II",
+  "description": "4th-century Roman naval and land strategy game set in the reign of Constantine.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06080e",
+  "theme_color": "#06080e",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

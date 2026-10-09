@@ -1,0 +1,3 @@
+FOUND "GRAECIA" AT 941455: 13",fontFamily:"'Cinzel', serif",letterSpacing:"5px",fontWeight:"900",textAnchor:"middle",children:"GRAECIA"}),
+  e.jsx("text",{x:"1920",y:"380",fill:"#fef08a",fontSize:"14",fontFamily:"'Cinzel', serif",lett
+FOUND "graecia" AT 950174: ",colorVariant:"sand_gold",perkEffect:{maxSuppliesBonus:0,bonusSolidiYieldPercent:0}},{id:"hegemony_graecia",name:"Diocese of Hellas & Crete",latinName:"Dioecesis Graeciae & Cretae",region:"Aegean Basin & So

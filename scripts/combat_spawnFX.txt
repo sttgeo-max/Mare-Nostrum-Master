@@ -1,0 +1,131 @@
+ id = Math.random().toString();
+    setFloatingText(prev => [...prev, { id, text, isPlayer, color }]);
+    setTimeout(() => { setFloatingText(prev => prev.filter(f => f.id !== id)); }, 1200);
+  };
+
+  const spawnFX = (isPlayer, type) => {
+    const id = Math.random().toString();
+    setHitFx(prev => [...prev, { id, isPlayer, type }]);
+    setTimeout(() => { setHitFx(prev => prev.filter(f => f.id !== id)); }, type === 'projectile' ? 800 : 1200);
+  };
+
+  const playTacticalCard = (card) => {
+    if (actionPoints < card.cost || turn !== 'player') return;
+    const newAP = actionPoints - card.cost;
+    setActionPoints(newAP);
+    setTacticalHand(prev => prev.filter(c => c.id !== card.id));
+    setHoveredAbility(null);
+    if (typeof v !== 'undefined' && v.playItemPickup) v.playItemPickup();
+    else if (typeof v !== 'undefined' && v.playClick) v.playClick();
+
+    const eqArts = Object.values(s.equipped || {}).filter(Boolean);
+    const bonusAtk = eqArts.reduce((acc, a) => acc + (a.bonusAttack || 0), 0);
+    const bonusDef = eqArts.reduce((acc, a) => acc + (a.bonusDefense || 0), 0);
+    const rawDmg = card.baseDamage || 0;
+    const dmg = rawDmg > 0 ? (rawDmg + bonusAtk) : 0;
+    const rawDef = card.defenseValue || 0;
+    const def = rawDef > 0 ? (rawDef + bonusDef) : 0;
+    const heal = card.healAmount || 0;
+
+    if (def > 0) {
+      setPlayerBlock(prev => prev + def);
+      spawnText('+' + def + ' DEFENSE 🛡️', true, '#38bdf8');
+      spawnFX(true, 'block');
+    }
+    if (heal > 0) {
+      setPlayerHp(prev => Math.min(maxPlayerHp, prev + heal));
+      spawnText('+' + heal + ' HP 💚', true, '#22c55e');
+      spawnFX(true, 'buff');
+    }
+    if (dmg > 0) {
+      const cid = card.id || "";
+      const atype = card.actionType || "";
+      const sEffect = card.statusEffect || "";
+
+      let weaponAnim = 'sword_slash';
+      if (atype === 'lightning' || sEffect === 'lightning_bolt' || cid.includes('lightning') || cid.includes('jupiter')) {
+        weaponAnim = 'lightning_bolt';
+      } else if (atype === 'fire' || sEffect === 'fire' || cid.includes('fire') || cid.includes('greek_fire') || cid.includes('onager')) {
+        weaponAnim = 'fire_spray';
+      } else if (cid.includes('pilum') || cid.includes('javelin') || cid.includes('plumbatae')) {
+        weaponAnim = 'javelin_launch';
+      } else if (cid.includes('archer') || cid.includes('sagittarii') || cid.includes('ballista') || cid.includes('scorpio') || atype === 'volley') {
+        weaponAnim = 'arrow_fire';
+      } else if (atype === 'ram' || cid.includes('ram')) {
+        weaponAnim = 'ram_impact';
+      } else {
+        weaponAnim = 'sword_slash';
+      }
+
+      let hitDelay = 220;
+      let impactFX = 'sword_slash';
+
+      if (weaponAnim === 'arrow_fire') {
+        setPlayerAnim('shoot');
+        spawnFX(false, 'arrow_fire_travel');
+        hitDelay = 380;
+        impactFX = 'arrow_fire_hit';
+      } else if (weaponAnim === 'javelin_launch') {
+        setPlayerAnim('shoot');
+        spawnFX(false, 'javelin_launch_travel');
+        hitDelay = 380;
+        impactFX = 'javelin_launch_hit';
+      } else if (weaponAnim === 'fire_spray') {
+        setPlayerAnim('attack');
+        spawnFX(false, 'fire_spray');
+        hitDelay = 340;
+        impactFX = 'fire_burn';
+      } else if (weaponAnim === 'lightning_bolt') {
+        setPlayerAnim('attack');
+        hitDelay = 160;
+        impactFX = 'lightning_bolt';
+      } else if (weaponAnim === 'ram_impact') {
+        setPlayerAnim('ram');
+        hitDelay = 250;
+        impactFX = 'ram_impact';
+      } else {
+        setPlayerAnim('attack');
+        hitDelay = 200;
+        impactFX = 'sword_slash';
+      }
+
+      const critChance = (card.critChance || 20) / 100;
+      const isCrit = Math.random() < critChance;
+      let finalDmg = isCrit ? Math.floor(dmg * 1.5) : dmg;
+
+      setTimeout(() => {
+        setPlayerAnim('idle');
+        spawnFX(false, impactFX);
+
+        if (enemyBlock > 0) {
+          if (enemyBlock >= finalDmg) {
+            setEnemyBlock(prev => prev - finalDmg);
+            spawnText('BLOCKED 🛡️', false, '#93c5fd');
+            spawnFX(false, 'block');
+            finalDmg = 0;
+          } else {
+            finalDmg -= enemyBlock;
+            setEnemyBlock(0);
+            spawnFX(false, 'block');
+          }
+        }
+        if (finalDmg > 0) {
+          setEnemyAnim('hit');
+          setTimeout(() => setEnemyAnim('idle'), 450);
+          setEnemyHp(prev => {
+            const next = Math.max(0, prev - finalDmg);
+            if (next <= 0) setTurn('victory');
+            return next;
+          });
+          if (isCrit) {
+            spawnFX(false, 'crit_burst');
+            spawnText('CRIT -' + finalDmg + ' ⚡', false, '#fbbf24');
+          } else {
+            spawnText('-' + finalDmg, false, '#ef4444');
+          }
+          spawnFX(false, 'bleed');
+
+          if (card.statusEffect === 'fire' || card.actionType === 'fire') {
+            setTimeout(() => { spawnFX(false, 'fire_burn'); spawnText('🔥 Ignis Graecus', false, '#f97316'); }, 400);
+          } else if (card.statusEffect === 'lightning_bolt' || card.actionType === 'lightning') {
+            setTimeout(() => { spawnFX(false, 'lightning_bo

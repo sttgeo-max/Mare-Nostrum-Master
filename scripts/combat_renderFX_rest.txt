@@ -1,0 +1,378 @@
+ll: "#f59e0b" }),
+                e.jsx("line", { x1: "-85", y1: "0", x2: "-34", y2: "0", stroke: "rgba(251, 191, 36, 0.7)", strokeWidth: "2", strokeDasharray: "10 5" })
+              ]
+            }),
+            // 3. Low Escort Arrow
+            e.jsxs("g", {
+              children: [
+                e.jsx("animateMotion", {
+                  path: path3,
+                  dur: "0.36s",
+                  repeatCount: "1",
+                  rotate: "auto",
+                  fill: "freeze"
+                }),
+                e.jsx("polygon", { points: "20,0 7,-4 10,0 7,4", fill: "#ffffff" }),
+                e.jsx("circle", { cx: "18", cy: "0", r: "5", fill: "#ef4444", className: "animate-pulse" }),
+                e.jsx("line", { x1: "-34", y1: "0", x2: "10", y2: "0", stroke: "#78350f", strokeWidth: "3", strokeLinecap: "round" }),
+                e.jsx("polygon", { points: "-34,-5 -22,0 -34,0", fill: "#dc2626" }),
+                e.jsx("polygon", { points: "-34,5 -22,0 -34,0", fill: "#dc2626" }),
+                e.jsx("line", { x1: "-85", y1: "0", x2: "-34", y2: "0", stroke: "rgba(239, 68, 68, 0.7)", strokeWidth: "2", strokeDasharray: "8 4" })
+              ]
+            })
+          ]
+        })
+      });
+    }
+
+    // ARROW / PROJECTILE IMPACT ON DEFENDER TOKEN
+    if (fx.type === 'arrow_fire_hit' || fx.type === 'projectile_hit') {
+      return e.jsxs("div", {
+        className: "w-48 h-48 sm:w-60 sm:h-60 relative flex items-center justify-center pointer-events-none z-50",
+        children: [
+          e.jsx("div", { className: "absolute inset-0 bg-red-600/35 rounded-full animate-ping" }),
+          e.jsxs("svg", {
+            viewBox: "0 0 120 120",
+            className: "w-full h-full overflow-visible drop-shadow-[0_0_20px_rgba(220,38,38,1)]",
+            children: [
+              // Embedded Quivering Arrow 1
+              e.jsxs("g", {
+                transform: "translate(52, 48) rotate(-18)",
+                className: "animate-arrow-quiver",
+                children: [
+                  e.jsx("line", { x1: "-42", y1: "0", x2: "0", y2: "0", stroke: "#78350f", strokeWidth: "3.8", strokeLinecap: "round" }),
+                  e.jsx("polygon", { points: "0,-4 10,0 0,4", fill: "#f8fafc" }),
+                  e.jsx("polygon", { points: "-42,-5 -28,0 -42,0", fill: "#dc2626" }),
+                  e.jsx("polygon", { points: "-42,5 -28,0 -42,0", fill: "#dc2626" }),
+                  e.jsx("circle", { cx: "0", cy: "0", r: "4", fill: "#fbbf24", className: "animate-ping" })
+                ]
+              }),
+              // Embedded Quivering Arrow 2
+              e.jsxs("g", {
+                transform: "translate(68, 64) rotate(14)",
+                className: "animate-arrow-quiver",
+                children: [
+                  e.jsx("line", { x1: "-40", y1: "0", x2: "0", y2: "0", stroke: "#78350f", strokeWidth: "3.8", strokeLinecap: "round" }),
+                  e.jsx("polygon", { points: "0,-4 10,0 0,4", fill: "#f8fafc" }),
+                  e.jsx("polygon", { points: "-40,-5 -26,0 -40,0", fill: "#f59e0b" }),
+                  e.jsx("polygon", { points: "-40,5 -26,0 -40,0", fill: "#f59e0b" })
+                ]
+              }),
+              // Blood & Spark Burst
+              Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i * 30) * Math.PI / 180;
+                const dist = 22 + (i % 3) * 14;
+                return e.jsx("circle", {
+                  key: i,
+                  cx: 60 + Math.cos(angle) * 8,
+                  cy: 56 + Math.sin(angle) * 8,
+                  r: 2.5 + (i % 2),
+                  fill: i % 2 === 0 ? "#dc2626" : "#f59e0b",
+                  className: "animate-[splatter_0.55s_ease-out_forwards]",
+                  style: { '--tx': (Math.cos(angle) * dist) + 'px', '--ty': (Math.sin(angle) * dist) + 'px' }
+                });
+              })
+            ]
+          })
+        ]
+      });
+    }
+
+    // 3. JAVELIN / PILUM LAUNCH (Heavy Roman Pilum Ballistic Flight from Attacker to Target)
+    if (fx.type === 'javelin_launch_travel' || fx.type === 'javelin_launch_enemy_travel') {
+      const isFromPlayer = fx.type === 'javelin_launch_travel';
+      const pilumPath = isFromPlayer ? "M 200 260 Q 500 160 800 260" : "M 800 260 Q 500 160 200 260";
+
+      return e.jsx("div", {
+        className: "w-full h-full absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none z-50",
+        children: e.jsxs("svg", {
+          viewBox: "0 0 1000 500",
+          className: "w-full h-full overflow-visible pointer-events-none",
+          children: [
+            // Launch Shockwaves at Attacker Token
+            e.jsx("circle", {
+              cx: isFromPlayer ? "200" : "800",
+              cy: "260",
+              r: "38",
+              fill: "none",
+              stroke: "#fbbf24",
+              strokeWidth: "4",
+              className: "animate-ping opacity-90"
+            }),
+            e.jsx("circle", {
+              cx: isFromPlayer ? "200" : "800",
+              cy: "260",
+              r: "22",
+              fill: "#f97316",
+              className: "animate-ping opacity-85"
+            }),
+            // Trajectory Trail
+            e.jsx("path", {
+              d: pilumPath,
+              fill: "none",
+              stroke: "rgba(251, 191, 36, 0.5)",
+              strokeWidth: "2.5",
+              strokeDasharray: "10 6",
+              className: "animate-pulse"
+            }),
+            // High-Speed Roman Pilum Weapon
+            e.jsxs("g", {
+              children: [
+                e.jsx("animateMotion", {
+                  path: pilumPath,
+                  dur: "0.38s",
+                  repeatCount: "1",
+                  rotate: "auto",
+                  fill: "freeze"
+                }),
+                // Ash Wood Shaft
+                e.jsx("line", { x1: "-95", y1: "0", x2: "0", y2: "0", stroke: "#78350f", strokeWidth: "6.5", strokeLinecap: "round" }),
+                // Heavy Lead Counterweight Collet
+                e.jsx("circle", { cx: "0", cy: "0", r: "6.5", fill: "#334155" }),
+                // Iron Neck / Shank
+                e.jsx("line", { x1: "0", y1: "0", x2: "70", y2: "0", stroke: "#cbd5e1", strokeWidth: "4" }),
+                // Hardened Pyramid Tip
+                e.jsx("polygon", { points: "70,-5 90,0 70,5", fill: "#ffffff" }),
+                // Glowing Kinetic Tip Flare
+                e.jsx("circle", { cx: "90", cy: "0", r: "6", fill: "#fde047", className: "animate-ping opacity-90" }),
+                // Trailing Aerodynamic Sonic Ribbon
+                e.jsx("line", { x1: "-160", y1: "0", x2: "-95", y2: "0", stroke: "rgba(245, 158, 11, 0.85)", strokeWidth: "3.5", strokeDasharray: "14 6" })
+              ]
+            })
+          ]
+        })
+      });
+    }
+
+    // JAVELIN / PILUM HEAVY IMPACT ON TARGET TOKEN
+    if (fx.type === 'javelin_launch_hit') {
+      return e.jsxs("div", {
+        className: "w-56 h-56 sm:w-72 sm:h-72 relative flex items-center justify-center pointer-events-none z-50",
+        children: [
+          e.jsx("div", { className: "absolute inset-0 rounded-full border-4 border-amber-400/90 animate-ram-wave" }),
+          e.jsx("div", { className: "absolute inset-0 bg-red-600/45 rounded-full animate-ping" }),
+          e.jsxs("svg", {
+            viewBox: "0 0 160 160",
+            className: "w-full h-full overflow-visible drop-shadow-[0_0_30px_rgba(239,68,68,1)] animate-roman-heavy-shake",
+            children: [
+              // Deeply Embedded Shattered Pilum
+              e.jsxs("g", {
+                transform: "translate(80, 80) rotate(-22)",
+                children: [
+                  e.jsx("line", { x1: "-80", y1: "-14", x2: "-18", y2: "0", stroke: "#78350f", strokeWidth: "6.5", strokeLinecap: "round" }),
+                  e.jsx("circle", { cx: "-18", cy: "0", r: "6", fill: "#334155" }),
+                  e.jsx("line", { x1: "-18", y1: "0", x2: "22", y2: "10", stroke: "#cbd5e1", strokeWidth: "4" }),
+                  e.jsx("polygon", { points: "22,6 38,12 22,14", fill: "#ffffff" })
+                ]
+              }),
+              // Splintered Metal / Wood / Blood Debris
+              Array.from({ length: 16 }).map((_, i) => {
+                const angle = (i * 22.5) * Math.PI / 180;
+                const dist = 32 + (i % 4) * 18;
+                return e.jsx("circle", {
+                  key: i,
+                  cx: 80,
+                  cy: 80,
+                  r: 3 + (i % 3),
+                  fill: i % 3 === 0 ? "#dc2626" : i % 3 === 1 ? "#78350f" : "#fbbf24",
+                  className: "animate-[splatter_0.65s_ease-out_forwards]",
+                  style: { '--tx': (Math.cos(angle) * dist) + 'px', '--ty': (Math.sin(angle) * dist) + 'px' }
+                });
+              })
+            ]
+          })
+        ]
+      });
+    }
+
+    // 4. GREEK FIRE SIPHON & CONFLAGRATION STREAM (Continuous jet from attacker token to target token)
+    if (fx.type === 'fire_spray' || fx.type === 'fire_spray_enemy') {
+      const isFromPlayer = fx.type === 'fire_spray';
+      const outerPath = isFromPlayer
+        ? "M 200 260 Q 450 180 800 200 Q 820 260 800 320 Q 450 340 200 260 Z"
+        : "M 800 260 Q 550 180 200 200 Q 180 260 200 320 Q 550 340 800 260 Z";
+      const innerPath = isFromPlayer
+        ? "M 200 260 Q 480 220 780 235 Q 800 260 780 285 Q 480 300 200 260 Z"
+        : "M 800 260 Q 520 220 220 235 Q 200 260 220 285 Q 520 300 800 260 Z";
+
+      return e.jsx("div", {
+        className: "w-full h-full absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none z-50",
+        children: e.jsxs("svg", {
+          viewBox: "0 0 1000 500",
+          className: "w-full h-full overflow-visible pointer-events-none",
+          children: [
+            // Outer Fire Jet Cone
+            e.jsx("path", {
+              d: outerPath,
+              fill: "url(#greekFireGrad)",
+              opacity: "0.88",
+              className: "animate-pulse"
+            }),
+            // Intense Inner Liquid Jet
+            e.jsx("path", {
+              d: innerPath,
+              fill: "#fef08a",
+              opacity: "0.95"
+            }),
+            // Surging Fire Bubble Particles
+            Array.from({ length: 24 }).map((_, i) => {
+              const prog = (i + 1) / 25;
+              const x = isFromPlayer ? 200 + prog * 600 : 800 - prog * 600;
+              const spread = prog * 45;
+              const y = 260 + Math.sin(i * 1.4) * spread;
+              const r = 5 + (i % 4) * 3;
+              return e.jsx("circle", {
+                key: i,
+                cx: x,
+                cy: y,
+                r: r,
+                fill: i % 3 === 0 ? "#fef08a" : i % 3 === 1 ? "#f97316" : "#dc2626",
+                className: "animate-flame-lick"
+              });
+            }),
+            e.jsxs("defs", {
+              children: [
+                e.jsxs("linearGradient", {
+                  id: "greekFireGrad",
+                  x1: isFromPlayer ? "0%" : "100%",
+                  y1: "50%",
+                  x2: isFromPlayer ? "100%" : "0%",
+                  y2: "50%",
+                  children: [
+                    e.jsx("stop", { offset: "0%", stopColor: "#fef08a" }),
+                    e.jsx("stop", { offset: "25%", stopColor: "#f97316" }),
+                    e.jsx("stop", { offset: "70%", stopColor: "#ef4444" }),
+                    e.jsx("stop", { offset: "100%", stopColor: "#7f1d1d", stopOpacity: "0.4" })
+                  ]
+                })
+              ]
+            })
+          ]
+        })
+      });
+    }
+
+    // FIRE / BURNING ENGULFING TARGET TOKEN
+    if (fx.type === 'fire_burn' || fx.type === 'fire') {
+      return e.jsxs("div", {
+        className: "w-56 h-56 sm:w-72 sm:h-72 relative flex items-center justify-center pointer-events-none z-50",
+        children: [
+          e.jsx("div", { className: "absolute inset-0 bg-orange-600/35 rounded-full blur-2xl animate-pulse" }),
+          e.jsxs("svg", {
+            viewBox: "0 0 160 160",
+            className: "w-full h-full overflow-visible drop-shadow-[0_0_35px_rgba(249,115,22,1)] animate-flame-lick",
+            children: [
+              e.jsx("path", { d: "M 45 130 Q 30 90 42 65 Q 52 45 48 20 Q 62 48 58 75 Q 52 98 62 130 Z", fill: "#dc2626", opacity: "0.85" }),
+              e.jsx("path", { d: "M 48 130 Q 38 95 46 72 Q 54 55 52 35 Q 60 55 56 80 Q 52 100 58 130 Z", fill: "#f97316", opacity: "0.9" }),
+              e.jsx("path", { d: "M 50 130 Q 42 100 48 80 Q 54 65 52 50 Q 58 65 55 85 Q 52 105 56 130 Z", fill: "#fef08a" }),
+              e.jsx("path", { d: "M 65 135 Q 60 85 75 50 Q 82 25 80 5 Q 92 35 88 70 Q 82 100 95 135 Z", fill: "#ea580c", opacity: "0.85" }),
+              e.jsx("path", { d: "M 70 135 Q 66 90 76 60 Q 84 38 80 20 Q 90 42 86 75 Q 82 105 90 135 Z", fill: "#f59e0b", opacity: "0.9" }),
+              e.jsx("path", { d: "M 74 135 Q 70 95 78 70 Q 84 50 82 35 Q 88 52 84 80 Q 82 110 86 135 Z", fill: "#fef08a" }),
+              e.jsx("path", { d: "M 95 130 Q 110 90 98 65 Q 88 45 92 20 Q 78 48 82 75 Q 88 98 78 130 Z", fill: "#dc2626", opacity: "0.85" }),
+              e.jsx("path", { d: "M 92 130 Q 102 95 94 72 Q 86 55 88 35 Q 80 55 84 80 Q 88 100 82 130 Z", fill: "#f97316", opacity: "0.9" }),
+              e.jsx("path", { d: "M 90 130 Q 98 100 92 80 Q 86 65 88 50 Q 82 65 85 85 Q 88 105 84 130 Z", fill: "#fef08a" }),
+              Array.from({ length: 14 }).map((_, i) => {
+                const x = 45 + (i * 8);
+                const y = 65 + Math.sin(i * 1.7) * 35;
+                return e.jsx("circle", {
+                  key: i,
+                  cx: x,
+                  cy: y,
+                  r: 2.5,
+                  fill: i % 2 === 0 ? "#fef08a" : "#f97316",
+                  className: "ember-particle"
+                });
+              })
+            ]
+          })
+        ]
+      });
+    }
+
+    // 5. LIGHTNING BOLT (Jupiter Fulmen Striking Down onto Target Token)
+    if (fx.type === 'lightning_bolt' || fx.type === 'lightning') {
+      return e.jsxs("div", {
+        className: "w-64 h-96 sm:w-80 sm:h-[440px] md:w-96 md:h-[480px] relative flex flex-col items-center justify-end pointer-events-none z-50 -top-32",
+        children: [
+          e.jsx("div", { className: "absolute -inset-40 bg-cyan-400/30 rounded-full blur-3xl animate-ping" }),
+          e.jsxs("svg", {
+            viewBox: "0 0 180 400",
+            className: "w-full h-full overflow-visible drop-shadow-[0_0_40px_rgba(56,189,248,1)] animate-lightning-bolt",
+            children: [
+              // Broad Aura Bolt
+              e.jsx("path", {
+                d: "M 90 0 L 100 60 L 75 110 L 108 170 L 80 235 L 105 295 L 88 350 L 90 395",
+                fill: "none",
+                stroke: "rgba(56, 189, 248, 0.7)",
+                strokeWidth: "20",
+                strokeLinecap: "round"
+              }),
+              // Yellow Core
+              e.jsx("path", {
+                d: "M 90 0 L 100 60 L 75 110 L 108 170 L 80 235 L 105 295 L 88 350 L 90 395",
+                fill: "none",
+                stroke: "#fde047",
+                strokeWidth: "10",
+                strokeLinecap: "round"
+              }),
+              // White Hot Center
+              e.jsx("path", {
+                d: "M 90 0 L 100 60 L 75 110 L 108 170 L 80 235 L 105 295 L 88 350 L 90 395",
+                fill: "none",
+                stroke: "#ffffff",
+                strokeWidth: "5",
+                strokeLinecap: "round"
+              }),
+              // Side Forks
+              e.jsx("path", {
+                d: "M 100 60 L 140 85 L 155 115 M 75 110 L 45 135 L 32 165 M 108 170 L 148 210 M 80 235 L 50 270 L 38 305 M 105 295 L 142 330",
+                fill: "none",
+                stroke: "#67e8f9",
+                strokeWidth: "3.5",
+                strokeLinecap: "round"
+              }),
+              e.jsx("circle", { cx: "90", cy: "395", r: "28", fill: "#ffffff", className: "animate-ping opacity-90" }),
+              e.jsx("circle", { cx: "90", cy: "395", r: "42", fill: "none", stroke: "#38bdf8", strokeWidth: "5", className: "animate-pulse" }),
+              Array.from({ length: 14 }).map((_, i) => {
+                const angle = (i * 25.7) * Math.PI / 180;
+                const dist = 32 + (i % 3) * 16;
+                return e.jsx("circle", {
+                  key: i,
+                  cx: 90 + Math.cos(angle) * dist,
+                  cy: 395 + Math.sin(angle) * dist,
+                  r: 2.5,
+                  fill: "#fde047",
+                  className: "animate-ping"
+                });
+              })
+            ]
+          })
+        ]
+      });
+    }
+
+    // 6. RAM IMPACT (Shockwave Rings and Timber Splinters)
+    if (fx.type === 'ram_impact') {
+      return e.jsxs("div", {
+        className: "w-64 h-64 sm:w-80 sm:h-80 relative flex items-center justify-center pointer-events-none z-50",
+        children: [
+          e.jsx("div", { className: "absolute inset-0 rounded-full border-8 border-red-500/80 animate-ram-wave" }),
+          e.jsx("div", { className: "absolute inset-4 rounded-full border-4 border-amber-400/90 animate-ram-wave", style: { animationDelay: '0.1s' } }),
+          e.jsxs("svg", {
+            viewBox: "0 0 120 120",
+            className: "w-full h-full overflow-visible drop-shadow-[0_0_35px_rgba(239,68,68,1)] animate-roman-heavy-shake",
+            children: [
+              // Burst Spikes
+              e.jsxs("g", {
+                stroke: "#ef4444",
+                strokeWidth: "6",
+                strokeLinecap: "round",
+                children: [
+                  e.jsx("path", { d: "M60 10 L60 35" }),
+                  e.jsx("path", { d: "M60 110 L60 85" }),
+                  e.jsx("path", { d: "M10 60 L35 60" }),
+                  e.jsx("path", { d: "M110 60 L85 60" }),
+                  e.jsx("path", { d: "M24 24 L42 42" }),
+                  e.jsx("path", { d: "M96 96 L78 78" }),
+                  e.jsx("path", { d: "M24 96 L42 78" }),
+ 

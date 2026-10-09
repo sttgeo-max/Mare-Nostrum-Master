@@ -1,0 +1,665 @@
+const playAbility = (ability) => {
+    if (actionPoints < ability.cost || turn !== 'player') return;
+    const newAP = actionPoints - ability.cost;
+    setActionPoints(newAP);
+    setHoveredAbility(null);
+    if (typeof v !== 'undefined' && v.playClick) v.playClick();
+
+    if (ability.type !== 'block') {
+      let weaponAnim = 'sword_slash';
+      if (ability.type === 'projectile') {
+        weaponAnim = isSea ? 'arrow_fire' : 'javelin_launch';
+        if (typeof v !== 'undefined') { if (isSea && v.playBallistaTwang) v.playBallistaTwang(); else if (v.playPilumBarrage) v.playPilumBarrage(); }
+      } else if (ability.type === 'archers') {
+        weaponAnim = 'arrow_fire';
+        if (typeof v !== 'undefined' && v.playArrowSalvo) v.playArrowSalvo();
+      } else if (ability.type === 'ram') {
+        weaponAnim = 'ram_impact';
+        if (typeof v !== 'undefined' && v.playRammingAttack) v.playRammingAttack();
+      } else {
+        weaponAnim = 'sword_slash';
+        if (typeof v !== 'undefined' && v.playGladiusClash) v.playGladiusClash();
+      }
+
+      let hitDelay = 220;
+      let impactFX = 'sword_slash';
+
+      if (weaponAnim === 'arrow_fire') {
+        setPlayerAnim('shoot');
+        spawnFX(false, 'arrow_fire_travel');
+        hitDelay = 380;
+        impactFX = 'arrow_fire_hit';
+      } else if (weaponAnim === 'javelin_launch') {
+        setPlayerAnim('shoot');
+        spawnFX(false, 'javelin_launch_travel');
+        hitDelay = 380;
+        impactFX = 'javelin_launch_hit';
+      } else if (weaponAnim === 'lightning_bolt') {
+        setPlayerAnim('attack');
+        hitDelay = 160;
+        impactFX = 'lightning_bolt';
+      } else if (weaponAnim === 'ram_impact') {
+        setPlayerAnim('ram');
+        hitDelay = 250;
+        impactFX = 'ram_impact';
+      } else {
+        setPlayerAnim('attack');
+        hitDelay = 200;
+        impactFX = 'sword_slash';
+      }
+
+      const isCrit = Math.random() < 0.25;
+      let dmg = ability.dmg;
+      if (isCrit) dmg = Math.floor(dmg * 1.5);
+
+      setTimeout(() => {
+        setPlayerAnim('idle');
+        spawnFX(false, impactFX);
+
+        if (enemyBlock > 0) {
+          if (enemyBlock >= dmg) {
+            setEnemyBlock(prev => prev - dmg);
+            spawnText('BLOCKED 🛡️', false, '#93c5fd');
+            spawnFX(false, 'block');
+            dmg = 0;
+          } else {
+            dmg -= enemyBlock;
+            setEnemyBlock(0);
+            spawnFX(false, 'block');
+          }
+        }
+        if (dmg > 0) {
+          setEnemyAnim('hit');
+          setTimeout(() => setEnemyAnim('idle'), 450);
+          setEnemyHp(prev => {
+            const next = Math.max(0, prev - dmg);
+            if (next <= 0) setTurn('victory');
+            return next;
+          });
+
+          if (isCrit) {
+            spawnFX(false, 'crit_burst');
+            spawnText('CRIT -' + dmg + ' ⚡', false, '#fbbf24');
+          } else {
+            spawnText('-' + dmg, false, '#ef4444');
+          }
+          spawnFX(false, 'bleed');
+
+          if (ability.effect === 'bleed') {
+            setTimeout(() => { spawnFX(false, 'bleed'); spawnText('🩸 Bleeding', false, '#991b1b'); }, 400);
+          } else if (ability.effect === 'freeze_stun') {
+            setTimeout(() => { spawnFX(false, 'freeze'); spawnFX(false, 'stun'); spawnText('💫 Stunned', false, '#38bdf8'); }, 400);
+          }
+        }
+      }, hitDelay);
+    } else {
+      if (typeof v !== 'undefined' && v.playShieldBlock) v.playShieldBlock();
+      setPlayerBlock(prev => prev + ability.def);
+      spawnText('+' + ability.def + ' DEFENSE 🛡️', true, '#38bdf8');
+      spawnFX(true, 'buff');
+    }
+
+    if (newAP === 0) {
+      setTimeout(() => endTurn(), 1400);
+    }
+  };
+  const playerBlockRef = b.useRef(playerBlock);
+  b.useEffect(() => { playerBlockRef.current = playerBlock; }, [playerBlock]);  b.useEffect(() => { if (t) { setPlayerHp(isSea ? (s.fleetHp || 100) : (s.legionHp || 100)); setEnemyHp(t.hp || t.maxHp || 50); setTurn('player'); setActionPoints(3); setPlayerBlock(0); setEnemyBlock(0); setTacticalHand(getInitialEquippedTacticalCards()); setPlayerAnim('idle'); setEnemyAnim('idle'); setFloatingText([]); setHitFx([]); setHoveredAbility(null); setCurrentIntent(intents[0]); setIsRelicDrawerOpen(false); setRelicCooldowns({}); } }, [t?.id]);
+
+  const endTurn = () => {
+    setRelicCooldowns(prev => {
+      const next = {};
+      for (const k in prev) {
+        if (prev[k] > 1) next[k] = prev[k] - 1;
+      }
+      return next;
+    });
+    if (enemyHpRef.current <= 0 || playerHpRef.current <= 0) return;
+    setTurn('enemy');
+    setActionPoints(0);
+
+    setTimeout(() => {
+      if (enemyHpRef.current <= 0 || playerHpRef.current <= 0) return;
+
+      let dmg = currentIntent.type !== 'defend' ? currentIntent.val : 0;
+
+      if (dmg > 0) {
+        const isProj = currentIntent.type === 'projectile';
+        const isRam = currentIntent.type === 'heavy' || currentIntent.type === 'ram';
+        const isCrit = Math.random() < 0.15;
+        if (isCrit) dmg = Math.floor(dmg * 1.5);
+
+        let enemyWeapon = 'sword_slash';
+        let hitDelay = 220;
+        let impactFX = 'sword_slash';
+
+        if (isProj) {
+          enemyWeapon = isSea ? 'arrow_fire' : 'javelin_launch';
+          setEnemyAnim('shoot');
+          spawnFX(true, enemyWeapon === 'arrow_fire' ? 'arrow_fire_enemy_travel' : 'javelin_launch_enemy_travel');
+          hitDelay = 380;
+          impactFX = enemyWeapon === 'arrow_fire' ? 'arrow_fire_hit' : 'javelin_launch_hit';
+        } else if (isRam) {
+          enemyWeapon = 'ram_impact';
+          setEnemyAnim('ram');
+          hitDelay = 250;
+          impactFX = 'ram_impact';
+        } else {
+          setEnemyAnim('attack');
+          hitDelay = 200;
+          impactFX = 'sword_slash';
+        }
+
+        setTimeout(() => {
+          setEnemyAnim('idle');
+          spawnFX(true, impactFX);
+
+          let currentBlock = playerBlockRef.current;
+          if (currentBlock > 0) {
+            if (currentBlock >= dmg) {
+              setPlayerBlock(prev => prev - dmg);
+              spawnText('BLOCKED 🛡️', true, '#93c5fd');
+              spawnFX(true, 'block');
+              dmg = 0;
+            } else {
+              dmg -= currentBlock;
+              setPlayerBlock(0);
+              spawnFX(true, 'block');
+            }
+          }
+          if (dmg > 0) {
+            setPlayerAnim('hit');
+            setTimeout(() => setPlayerAnim('idle'), 450);
+            setPlayerHp(prev => {
+              const next = Math.max(0, prev - dmg);
+              if (next <= 0) setTurn('defeat');
+              return next;
+            });
+
+            if (isCrit) {
+              spawnFX(true, 'crit_burst');
+              spawnText('CRIT -' + dmg + ' ⚡', true, '#fbbf24');
+            } else {
+              spawnText('-' + dmg, true, '#ef4444');
+            }
+            spawnFX(true, 'bleed');
+          }
+        }, hitDelay);
+      } else if (currentIntent.type === 'defend') {
+        setEnemyBlock(prev => prev + currentIntent.val);
+        spawnText('+' + currentIntent.val + ' DEFENSE 🛡️', false, '#38bdf8');
+        spawnFX(false, 'buff');
+      }
+
+      setTimeout(() => {
+        if (playerHpRef.current <= 0 || enemyHpRef.current <= 0) return;
+        setTurn('player');
+        setActionPoints(maxAP);
+        setAbilities(defaultAbilities);
+        setTacticalHand(getInitialEquippedTacticalCards());
+        setEnemyBlock(0);
+        setPlayerBlock(0);
+        setCurrentIntent(intents[Math.floor(Math.random() * intents.length)]);
+      }, 1500);
+    }, 1000);
+  };
+  const handleVictory = () => {
+    try {
+      const curHp = Math.max(1, playerHpRef.current || 1);
+      if (typeof v !== "undefined") {
+        if (v.playCoin) v.playCoin();
+        if (victorySpoils.droppedArtifact && v.playItemPickup) v.playItemPickup();
+      }
+      a(prev => {
+        let newInv = [...(prev.inventory || [])];
+        if (victorySpoils.droppedArtifact && !newInv.some(x => x.id === victorySpoils.droppedArtifact.id)) {
+          newInv.push(victorySpoils.droppedArtifact);
+        }
+        let newCargo = { ...(prev.cargo || {}) };
+        if (victorySpoils.cargoPlunder) {
+          newCargo[victorySpoils.cargoPlunder.id] = (newCargo[victorySpoils.cargoPlunder.id] || 0) + victorySpoils.cargoPlunder.amount;
+        }
+        const logEntry = {
+          id: "log_vic_" + Date.now(),
+          timestamp: new Date().toLocaleTimeString(),
+          text: "Victory over " + (t.name || "Enemy") + "! Plundered +" + victorySpoils.solidi + " Solidi, +" + victorySpoils.fama + " Fama, +" + victorySpoils.supplies + " Supplies, +" + victorySpoils.essence + " Essence" + (victorySpoils.desertGems ? (", +" + victorySpoils.desertGems + " Gem") : "") + (victorySpoils.droppedArtifact ? (", Claimed Relic: " + victorySpoils.droppedArtifact.name) : "") + ".",
+          type: "combat"
+        };
+        return {
+          ...prev,
+          denarii: (prev.denarii || 0) + victorySpoils.solidi,
+          solidi: (prev.solidi || 0) + victorySpoils.solidi,
+          fama: (prev.fama || 0) + victorySpoils.fama,
+          supplies: (prev.supplies || 0) + victorySpoils.supplies,
+          essence: (prev.essence || 0) + victorySpoils.essence,
+          desertGems: (prev.desertGems || 0) + (victorySpoils.desertGems || 0),
+          inventory: newInv,
+          cargo: newCargo,
+          [isSea ? "fleetHp" : "legionHp"]: curHp,
+          isEnemyTurn: false,
+          iter: Math.max(6, prev.iter ?? 6),
+          captainsLog: [logEntry, ...(prev.captainsLog || [])]
+        };
+      });
+    } catch(e) { console.error("Combat victory state error:", e); }
+    try { r(!0); } catch(e) { console.error("Combat victory close error:", e); }
+  };
+  const handleDefeat = () => {
+    try {
+      a(prev => ({
+        ...prev,
+        [isSea ? "fleetHp" : "legionHp"]: Math.max(1, Math.round((isSea ? (prev.maxFleetHp || 100) : (prev.maxLegionHp || 100)) * 0.25)),
+        isEnemyTurn: false,
+        iter: Math.max(6, prev.iter ?? 6)
+      }));
+    } catch(e) { console.error("Combat defeat state error:", e); }
+    try { r(!1); } catch(e) { console.error("Combat defeat close error:", e); }
+  };
+  const handleExecuteRetreat = b.useCallback(() => {
+    if (typeof v !== "undefined" && v.playClick) v.playClick();
+    setShowRetreatConfirm(false);
+    a(prev => ({ ...prev, [isSea ? "fleetHp" : "legionHp"]: playerHpRef.current }));
+    r(!1);
+  }, [a, isSea, r]);
+  b.useEffect(() => {
+    const onCombatKeyDown = (e) => {
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return;
+      if (turn === "victory") {
+        if (e.key === " " || e.key === "Enter" || e.key === "Escape") {
+          e.preventDefault();
+          handleVictory();
+          return;
+        }
+      }
+      if (turn === "defeat") {
+        if (e.key === " " || e.key === "Enter" || e.key === "Escape") {
+          e.preventDefault();
+          handleDefeat();
+          return;
+        }
+      }
+      if (showRetreatConfirm) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setShowRetreatConfirm(false);
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleExecuteRetreat();
+          return;
+        }
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (isRelicDrawerOpen) {
+          setIsRelicDrawerOpen(false);
+          return;
+        }
+        if (turn === "player") {
+          setShowRetreatConfirm(true);
+          return;
+        }
+        return;
+      }
+      if (e.key === "r" || e.key === "R") {
+        e.preventDefault();
+        if (typeof v !== "undefined" && v.playClick) v.playClick();
+        setIsRelicDrawerOpen(prev => !prev);
+        return;
+      }
+      if (turn !== "player") return;
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        if (typeof v !== "undefined" && v.playClick) v.playClick();
+        if (actionPoints >= 0) endTurn();
+        return;
+      }
+      if (e.key === "1") {
+        e.preventDefault();
+        const ab = defaultAbilities[0];
+        if (ab && actionPoints >= ab.cost) playAbility(ab);
+        return;
+      }
+      if (e.key === "2") {
+        e.preventDefault();
+        const ab = defaultAbilities[1];
+        if (ab && actionPoints >= ab.cost) playAbility(ab);
+        return;
+      }
+      if (e.key === "3") {
+        e.preventDefault();
+        const ab = defaultAbilities[2];
+        if (ab && actionPoints >= ab.cost) playAbility(ab);
+        return;
+      }
+      const num = parseInt(e.key, 10);
+      if (!isNaN(num) && num >= 4 && num <= 9) {
+        const cardIdx = num - 4;
+        if (displayedTacticalCards && displayedTacticalCards[cardIdx]) {
+          const card = displayedTacticalCards[cardIdx];
+          if (actionPoints >= card.cost) {
+            e.preventDefault();
+            playTacticalCard(card);
+            return;
+          }
+        }
+      }
+    };
+    window.addEventListener("keydown", onCombatKeyDown);
+    return () => window.removeEventListener("keydown", onCombatKeyDown);
+  }, [turn, showRetreatConfirm, isRelicDrawerOpen, actionPoints, displayedTacticalCards, defaultAbilities, handleVictory, handleDefeat, handleExecuteRetreat, endTurn, playAbility, playTacticalCard]);  const tokenVariants = {
+    idle: { x: 0, rotate: 0, scale: 1 },
+    attackPlayer: { x: 70, rotate: 12, scale: 1.15, transition: { type: "spring", stiffness: 400, damping: 15 } },
+    attackEnemy: { x: -70, rotate: -12, scale: 1.15, transition: { type: "spring", stiffness: 400, damping: 15 } },
+    ramPlayer: { x: 100, rotate: 5, scale: 1.25, transition: { type: "spring", stiffness: 500, damping: 12 } },
+    ramEnemy: { x: -100, rotate: -5, scale: 1.25, transition: { type: "spring", stiffness: 500, damping: 12 } },
+    shootPlayer: { x: -20, rotate: -5, scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } },
+    shootEnemy: { x: 20, rotate: 5, scale: 0.95, transition: { type: "spring", stiffness: 400, damping: 10 } },
+    hitPlayer: { x: -30, rotate: -18, scale: 0.9, transition: { type: "spring", stiffness: 600, damping: 10 } },
+    hitEnemy: { x: 30, rotate: 18, scale: 0.9, transition: { type: "spring", stiffness: 600, damping: 10 } },
+    dead: { y: 60, scale: 0.5, rotate: 80, filter: "grayscale(100%) brightness(0.3)", transition: { duration: 1.5, ease: "easeOut" } }
+  };
+
+  /* rendered hand */
+  const renderTacticalHandUI = () => {
+    if (!displayedTacticalCards || displayedTacticalCards.length === 0) return null;
+    return e.jsx("div", {
+      className: "w-full max-w-xl mx-auto flex items-center gap-1.5 sm:gap-2 overflow-x-auto py-1 px-1 justify-start sm:justify-center no-scrollbar z-30 select-none",
+      style: { scrollbarWidth: "none", WebkitOverflowScrolling: "touch" },
+      children: displayedTacticalCards.map((card, cardIdx) => {
+            const isAffordable = actionPoints >= card.cost;
+            const roleGradient = card.role === 'ATTACK'
+              ? 'from-[#380e0e]/95 via-[#1c0808]/95 to-[#0f0404]/98 border-rose-600/60'
+              : card.role === 'DEFENSE'
+              ? 'from-[#082038]/95 via-[#041020]/95 to-[#020810]/98 border-sky-500/60'
+              : 'from-[#352008]/95 via-[#1d1004]/95 to-[#0e0802]/98 border-amber-500/60';
+            const roleTextColor = card.role === 'ATTACK' ? 'text-rose-300' : card.role === 'DEFENSE' ? 'text-sky-300' : 'text-amber-300';
+            const statBadge = card.damageMultiplier
+              ? { text: `+${card.damageMultiplier}x DMG`, bg: 'bg-rose-950/80 text-rose-300 border border-rose-700/50' }
+              : card.blockAmount
+              ? { text: `+${card.blockAmount} BLK`, bg: 'bg-sky-950/80 text-sky-300 border border-sky-700/50' }
+              : card.healAmount
+              ? { text: `+${card.healAmount} HP`, bg: 'bg-emerald-950/80 text-emerald-300 border border-emerald-700/50' }
+              : card.bonusRedraws
+              ? { text: `+${card.bonusRedraws} REDRAW`, bg: 'bg-amber-950/80 text-amber-300 border border-amber-700/50' }
+              : null;
+            return e.jsxs("button", {
+              key: card.id,
+              type: "button",
+              disabled: !isAffordable,
+              onClick: () => isAffordable && playTacticalCard(card),
+              onMouseEnter: () => setHoveredAbility({
+                name: card.name,
+                desc: `${card.domain === 'sea' ? '⚓ Naval Classis Only' : card.domain === 'land' ? '🦅 Legio Land Only' : '✦ Universal Doctrine'} • ${card.description || card.tag}`,
+                cost: card.cost
+              }),
+              onMouseLeave: () => setHoveredAbility(null),
+              className: `relative shrink-0 flex flex-col justify-between w-[72px] sm:w-[84px] h-[60px] sm:h-[66px] p-1 sm:p-1.5 rounded-lg border bg-gradient-to-b ${roleGradient} ${isAffordable ? 'hover:scale-[1.04] hover:shadow-[0_0_14px_rgba(245,158,11,0.5)] cursor-pointer' : 'opacity-40 cursor-not-allowed'} transition-all shadow-md text-left select-none`,
+              children: [
+                e.jsxs("div", {
+                  className: "flex items-center justify-between w-full pointer-events-none",
+                  children: [
+                    e.jsxs("div", {
+                      className: "flex items-center gap-1",
+                      children: [
+                        e.jsx("span", {
+                          className: `text-[7px] sm:text-[7.5px] font-cinzel font-black tracking-wider ${roleTextColor}`,
+                          children: card.role ? card.role.slice(0, 3) : "TAC"
+                        }),
+                        
+                        e.jsx("span", {
+                          className: `text-[6px] sm:text-[6.5px] font-mono font-bold px-1 py-0.2 rounded border ${
+                            card.domain === "sea"
+                              ? "bg-sky-950/90 text-sky-300 border-sky-500/60"
+                              : card.domain === "land"
+                              ? "bg-amber-950/90 text-amber-300 border-amber-600/60"
+                              : "bg-purple-950/90 text-purple-200 border-purple-600/60"
+                          }`,
+                          children: card.domain === "sea" ? "⚓ SEA" : card.domain === "land" ? "🦅 LAND" : "✦ ALL"
+                        })
+                      ]
+                    }),
+                    e.jsxs("span", {
+                      className: `px-1 rounded-full text-[7.5px] sm:text-[8px] font-mono font-black border ${isAffordable ? 'bg-amber-500/30 text-amber-300 border-amber-400' : 'bg-stone-800 text-stone-500 border-stone-700'}`,
+                      children: [card.cost, " AP"]
+                    })
+                  ]
+                }),
+                e.jsx("span", {
+                  className: "font-cinzel font-bold text-[8px] sm:text-[9px] text-stone-100 leading-tight line-clamp-1 pointer-events-none drop-shadow-sm",
+                  children: card.shortName || card.name
+                }),
+                e.jsxs("div", {
+                  className: "flex items-center justify-between w-full pointer-events-none",
+                  children: [
+                    e.jsx("span", {
+                      className: "text-[7px] font-serif-body italic text-stone-300 line-clamp-1 opacity-80",
+                      children: card.shortDesc || card.tag || card.latinName || ""
+                    }),
+                    statBadge ? e.jsx("span", {
+                      className: `text-[7px] sm:text-[7.5px] font-mono font-bold px-1 rounded ${statBadge.bg}`,
+                      children: statBadge.text
+                    }) : null
+                  ]
+                })
+              ]
+            });
+          })
+    });
+  };
+  
+  const renderTokenBattleDamage = (isPlayer, hp, maxHp, anim) => {
+    const hpPct = Math.max(0, Math.min(100, Math.round((hp / (maxHp || 100)) * 100)));
+    const dmgPct = 100 - hpPct;
+    const isDead = hp <= 0;
+    const isHit = anim === 'hit';
+
+    if (dmgPct < 10 && !isHit && !isDead) return null;
+
+    return e.jsxs("div", {
+      className: "absolute inset-0 rounded-full overflow-hidden pointer-events-none z-30 select-none",
+      children: [
+        dmgPct >= 15 && e.jsxs("svg", {
+          viewBox: "0 0 100 100",
+          className: "absolute inset-0 w-full h-full pointer-events-none mix-blend-multiply transition-opacity duration-500",
+          style: { opacity: Math.min(0.85, 0.22 + dmgPct * 0.0065) },
+          children: [
+            e.jsx("path", { d: "M 22 28 Q 28 20 36 24 Q 40 32 32 38 Q 24 36 22 28 Z", fill: "#2b1808" }),
+            e.jsx("path", { d: "M 64 68 Q 72 60 80 64 Q 84 74 76 82 Q 68 80 64 68 Z", fill: "#1f1205" }),
+            e.jsx("path", { d: "M 15 55 Q 22 48 30 52 Q 28 62 20 64 Q 14 62 15 55 Z", fill: "#38220f" }),
+            e.jsx("path", { d: "M 52 18 Q 58 14 66 18 Q 62 26 55 25 Q 50 24 52 18 Z", fill: "#241506" }),
+            e.jsx("line", { x1: "30", y1: "20", x2: "45", y2: "35", stroke: "#0f0701", strokeWidth: "0.8", opacity: "0.7" }),
+            e.jsx("line", { x1: "65", y1: "55", x2: "80", y2: "70", stroke: "#0f0701", strokeWidth: "0.8", opacity: "0.7" }),
+            e.jsx("line", { x1: "25", y1: "65", x2: "38", y2: "75", stroke: "#ffffff", strokeWidth: "0.4", opacity: "0.4" }),
+            e.jsx("circle", { cx: "50", cy: "50", r: "47", fill: "none", stroke: "#120801", strokeWidth: dmgPct >= 50 ? "7" : "4", opacity: "0.6" })
+          ]
+        }),
+        dmgPct >= 30 && e.jsxs("svg", {
+          viewBox: "0 0 100 100",
+          className: "absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_0_2px_rgba(0,0,0,0.9)] transition-all duration-300",
+          children: [
+            e.jsx("path", {
+              d: "M 18 20 L 30 32 L 28 40 L 42 46 L 50 54 L 46 66 L 56 78 L 52 92",
+              fill: "none",
+              stroke: "#000000",
+              strokeWidth: "2.4",
+              strokeLinecap: "round"
+            }),
+            e.jsx("path", {
+              d: "M 18 20 L 30 32 L 28 40 L 42 46 L 50 54 L 46 66 L 56 78 L 52 92",
+              fill: "none",
+              stroke: dmgPct >= 65 ? "#ef4444" : "#e2e8f0",
+              strokeWidth: "1.1",
+              strokeLinecap: "round",
+              opacity: "0.85"
+            }),
+            e.jsx("path", {
+              d: "M 42 46 L 58 42 L 68 48 M 50 54 L 62 60 L 70 56 M 46 66 L 36 72 L 32 82",
+              fill: "none",
+              stroke: "#000000",
+              strokeWidth: "1.8",
+              strokeLinecap: "round"
+            }),
+            e.jsx("path", {
+              d: "M 42 46 L 58 42 L 68 48 M 50 54 L 62 60 L 70 56 M 46 66 L 36 72 L 32 82",
+              fill: "none",
+              stroke: dmgPct >= 65 ? "#dc2626" : "#cbd5e1",
+              strokeWidth: "0.8",
+              strokeLinecap: "round",
+              opacity: "0.8"
+            }),
+            dmgPct >= 60 && e.jsxs("g", {
+              children: [
+                e.jsx("path", {
+                  d: "M 86 26 L 72 38 L 75 52 L 60 62 L 66 76 L 78 86",
+                  fill: "none",
+                  stroke: "#000000",
+                  strokeWidth: "2.6",
+                  strokeLinecap: "round"
+                }),
+                e.jsx("path", {
+                  d: "M 86 26 L 72 38 L 75 52 L 60 62 L 66 76 L 78 86",
+                  fill: "none",
+                  stroke: "#ef4444",
+                  strokeWidth: "1.2",
+                  strokeLinecap: "round",
+                  opacity: "0.9"
+                }),
+                e.jsx("path", {
+                  d: "M 72 38 L 62 30 L 52 32 M 60 62 L 48 64",
+                  fill: "none",
+                  stroke: "#000000",
+                  strokeWidth: "1.6",
+                  strokeLinecap: "round"
+                })
+              ]
+            }),
+            (dmgPct >= 80 || isDead) && e.jsxs("g", {
+              children: [
+                e.jsx("path", {
+                  d: "M 8 52 L 24 48 L 38 56 L 64 46 L 82 54 L 95 48",
+                  fill: "none",
+                  stroke: "#050201",
+                  strokeWidth: "3.5",
+                  strokeLinecap: "round"
+                }),
+                e.jsx("path", {
+                  d: "M 8 52 L 24 48 L 38 56 L 64 46 L 82 54 L 95 48",
+                  fill: "none",
+                  stroke: "#f87171",
+                  strokeWidth: "1.4",
+                  strokeLinecap: "round"
+                })
+              ]
+            })
+          ]
+        }),
+        dmgPct >= 20 && e.jsxs("svg", {
+          viewBox: "0 0 100 100",
+          className: "absolute inset-0 w-full h-full pointer-events-none drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)] transition-all duration-300",
+          children: [
+            e.jsx("path", {
+              d: "M 44 36 Q 48 28 53 32 Q 58 26 62 31 Q 66 38 60 42 Q 65 48 58 52 Q 52 54 48 48 Q 42 46 44 36 Z",
+              fill: "#881337",
+              opacity: "0.9"
+            }),
+            e.jsx("path", {
+              d: "M 46 38 Q 49 32 53 35 Q 56 30 60 34 Q 63 39 58 43 Q 54 46 50 43 Q 45 42 46 38 Z",
+              fill: "#dc2626",
+              opacity: "0.85"
+            }),
+            e.jsx("circle", { cx: "36", cy: "40", r: "2.5", fill: "#991b1b" }),
+            e.jsx("circle", { cx: "32", cy: "44", r: "1.5", fill: "#b91c1c" }),
+            e.jsx("circle", { cx: "64", cy: "30", r: "2.2", fill: "#991b1b" }),
+            e.jsx("circle", { cx: "69", cy: "35", r: "1.4", fill: "#ef4444" }),
+            e.jsx("circle", { cx: "58", cy: "56", r: "2.8", fill: "#7f1d1d" }),
+            e.jsx("circle", { cx: "65", cy: "62", r: "1.8", fill: "#991b1b" }),
+            e.jsx("circle", { cx: "28", cy: "52", r: "2.1", fill: "#881337" }),
+            e.jsx("circle", { cx: "72", cy: "48", r: "2.4", fill: "#991b1b" }),
+            dmgPct >= 45 && e.jsxs("g", {
+              children: [
+                e.jsx("path", {
+                  d: "M 36 74 Q 37 84 38 90 A 2.5 2.5 0 0 1 33 90 Q 34 84 35 74 Z",
+                  fill: "#7f1d1d"
+                }),
+                e.jsx("circle", { cx: "35.5", cy: "91", r: "2.4", fill: "#991b1b" }),
+                e.jsx("circle", { cx: "35", cy: "90.5", r: "0.7", fill: "#ffffff", opacity: "0.7" }),
+                e.jsx("path", {
+                  d: "M 48 76 Q 49 88 50 95 A 3 3 0 0 1 44 95 Q 45 88 46 76 Z",
+                  fill: "#881337"
+                }),
+                e.jsx("circle", { cx: "47", cy: "96.5", r: "3", fill: "#b91c1c" }),
+                e.jsx("circle", { cx: "46.2", cy: "95.8", r: "0.9", fill: "#ffffff", opacity: "0.8" }),
+                e.jsx("path", {
+                  d: "M 62 72 Q 63 82 64 88 A 2.2 2.2 0 0 1 59 88 Q 60 82 61 72 Z",
+                  fill: "#7f1d1d"
+                }),
+                e.jsx("circle", { cx: "61.5", cy: "89", r: "2.2", fill: "#dc2626" }),
+                e.jsx("path", {
+                  d: "M 22 72 Q 38 88 52 86 Q 66 84 78 70 Q 68 84 50 90 Q 32 88 22 72 Z",
+                  fill: "#450a0a",
+                  opacity: "0.8"
+                })
+              ]
+            }),
+            (dmgPct >= 75 || isDead) && e.jsxs("g", {
+              children: [
+                e.jsx("path", {
+                  d: "M 10 58 Q 30 72 50 70 Q 70 68 90 56 Q 96 74 80 88 Q 50 102 18 88 Q 6 74 10 58 Z",
+                  fill: "#450a0a",
+                  opacity: "0.92"
+                }),
+                e.jsx("path", {
+                  d: "M 14 62 Q 32 74 50 72 Q 68 70 86 60 Q 82 78 68 86 Q 48 94 24 84 Z",
+                  fill: "#991b1b",
+                  opacity: "0.85"
+                }),
+                e.jsx("circle", { cx: "25", cy: "86", r: "2.6", fill: "#dc2626" }),
+                e.jsx("circle", { cx: "74", cy: "84", r: "2.6", fill: "#b91c1c" })
+              ]
+            })
+          ]
+        }),
+        isHit && e.jsxs("div", {
+          className: "absolute inset-0 flex items-center justify-center pointer-events-none z-40 animate-roman-shake",
+          children: [
+            e.jsx("div", { className: "absolute inset-0 bg-red-600/40 rounded-full animate-ping" }),
+            e.jsxs("svg", {
+              viewBox: "0 0 100 100",
+              className: "w-full h-full overflow-visible",
+              children: [
+                e.jsx("circle", { cx: "50", cy: "50", r: "35", fill: "none", stroke: "#ef4444", strokeWidth: "3", className: "animate-ping opacity-75" }),
+                [
+                  { cx: 30, cy: 30, r: 3.5, tx: -18, ty: -18 },
+                  { cx: 70, cy: 32, r: 3.2, tx: 18, ty: -16 },
+                  { cx: 28, cy: 68, r: 3.8, tx: -16, ty: 18 },
+                  { cx: 74, cy: 66, r: 3.4, tx: 18, ty: 18 },
+                  { cx: 50, cy: 22, r: 2.8, tx: 0, ty: -22 },
+                  { cx: 50, cy: 78, r: 3.0, tx: 0, ty: 22 },
+                  { cx: 22, cy: 50, r: 3.2, tx: -22, ty: 0 },
+                  { cx: 78, cy: 50, r: 3.0, tx: 22, ty: 0 }
+                ].map((b, i) => e.jsx("circle", {
+                  key: i,
+                  cx: b.cx,
+                  cy: b.cy,
+                  r: b.r,
+                  fill: "#ef4444",
+                  className: "animate-[splatter_0.45s_ease-out_forwards]",
+                  style: { '--tx': `${b.tx}px`, '--ty': `${b.ty}px` }
+                }))
+              ]
+            })
+          ]
+        }),
+        isDead && e.jsxs("div", {
+          className: "absolute inset-0 rounded-full bg-black/75 flex flex-col items-center justify-center backdrop-grayscale z-40 border-2 border-red-950/80 shadow-[inset_0_0_20px_rgba(0,0,0,0.95)]",
+          children: [
+            e.jsx("div", { className: "text-red-500 font-cinzel font-black text-xs tracking-widest uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]", children: "VICTUS" }),
+            e.jsx("div", { className: "w-8 h-[1px] bg-red-600/70 my-0.5" }),
+            e.jsx("div", { className: "text-[7.5px] font-mono text-red-400/80 tracking-widest", children: "CLADES" })
+          ]
+        })
+      ]
+    });

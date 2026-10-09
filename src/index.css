@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Faustina', serif;
+  background-color: #06080e;
+  color: #e5c158;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.amber-glass-pod {
+  background: rgba(12, 6, 2, 0.85);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 1rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.font-cinzel {
+  font-family: 'Cinzel', serif;
+}
+
+.font-serif-body {
+  font-family: 'Faustina', serif;
+}

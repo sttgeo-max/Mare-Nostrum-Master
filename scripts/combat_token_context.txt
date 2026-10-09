@@ -1,0 +1,77 @@
+ children: [
+            e.jsx("div", { className: "text-red-500 font-cinzel font-black text-xs tracking-widest uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]", children: "VICTUS" }),
+            e.jsx("div", { className: "w-8 h-[1px] bg-red-600/70 my-0.5" }),
+            e.jsx("div", { className: "text-[7.5px] font-mono text-red-400/80 tracking-widest", children: "CLADES" })
+          ]
+        })
+      ]
+    });
+  };
+
+  const renderToken = (isPlayer, hp, anim, modelType, faction, name) => {
+    const maxHp = isPlayer ? maxPlayerHp : maxEnemyHp;
+    let animState = 'idle';
+    if (hp <= 0) animState = 'dead';
+    else if (anim === 'attack') animState = isPlayer ? 'attackPlayer' : 'attackEnemy';
+    else if (anim === 'ram') animState = isPlayer ? 'ramPlayer' : 'ramEnemy';
+    else if (anim === 'shoot') animState = isPlayer ? 'shootPlayer' : 'shootEnemy';
+    else if (anim === 'hit') animState = isPlayer ? 'hitPlayer' : 'hitEnemy';
+
+    return e.jsxs("div", {
+      className: "relative flex flex-col items-center justify-center z-20 shrink-0 w-[105px] sm:w-[130px] md:w-[155px]",
+      children: [
+        e.jsx(ie.div, {
+          className: "relative z-30 shrink-0",
+          animate: animState,
+          variants: tokenVariants,
+          children: e.jsxs("div", {
+            className: "flex items-center justify-center scale-90 sm:scale-100 md:scale-115 relative w-[110px] h-[110px]",
+            children: [
+              e.jsx("div", { className: `absolute inset-0 rounded-full ${isPlayer ? 'bg-amber-500/20' : 'bg-red-600/20'} blur-xl z-0 scale-125` }),
+              e.jsx(Fo, {
+                size: 110,
+                metalFinish: isPlayer ? "gold" : "iron",
+                ringVariant: isPlayer ? "imperial_purple" : "crimson_blood",
+                showGlow: hp > 0,
+                children: e.jsx(rt, {
+                  size: 110 * 0.82,
+                  variant: isPlayer ? "imperial_purple" : "crimson_blood",
+                  emblem: isPlayer ? void 0 : (t ? Rr(t).emblem : void 0),
+                  topDownModel: !isPlayer && t && (Rr(t).emblem.includes("kraken")||Rr(t).emblem.includes("leviathan")||Rr(t).emblem.includes("serpent")||Rr(t).emblem.includes("scylla")||Rr(t).emblem.includes("charybdis")||Rr(t).emblem.includes("cetus")||Rr(t).emblem.includes("lion")||Rr(t).emblem.includes("wolf")||Rr(t).emblem.includes("bear")||Rr(t).emblem.includes("boar")||Rr(t).emblem.includes("scorpion")||Rr(t).emblem.includes("minotaur")||Rr(t).emblem.includes("cyclops")||Rr(t).emblem.includes("medusa")||Rr(t).emblem.includes("cerberus")||Rr(t).emblem.includes("siren")||Rr(t).emblem.includes("poseidon")||Rr(t).emblem.includes("ghost_ship")||Rr(t).emblem.includes("triton")) ? void 0 : (isSea ? "ship" : "legion"),
+                  topDownFaction: faction,
+                  topDownShipModelType: modelType,
+                  isHeroic: !0,
+                  isElaborate: !0,
+                  showGlow: hp > 0
+                })
+              }),
+              renderTokenBattleDamage(isPlayer, hp, maxHp, anim),
+              // Consecration Aura if player has active augury
+              isPlayer && s?.activeAugury && e.jsx("div", {
+                className: "absolute -inset-4 rounded-full border border-amber-400/60 shadow-[0_0_20px_rgba(251,191,36,0.5)] animate-pulse pointer-events-none z-10"
+              }),
+              // Shield Deflection Shockwave when blocking or hit
+              isPlayer && playerBlock > 0 && e.jsx("div", {
+                className: "absolute -inset-2 rounded-full border-2 border-amber-400/80 shadow-[0_0_25px_rgba(245,158,11,0.6)] animate-pulse pointer-events-none z-10"
+              }),
+              // Critical strike slash trail and sparks on hit
+              anim === 'hit' && e.jsxs("div", {
+                className: "absolute inset-0 pointer-events-none z-40 flex items-center justify-center",
+                children: [
+                  e.jsx("div", { className: "w-20 h-2 bg-gradient-to-r from-transparent via-amber-200 to-transparent rotate-45 animate-combatSlashStrike" }),
+                  e.jsx("div", { className: "w-20 h-2 bg-gradient-to-r from-transparent via-red-400 to-transparent -rotate-45 animate-combatSlashStrike" })
+                ]
+              }),
+              anim === 'hit' && e.jsx("div", { className: "absolute inset-0 bg-red-600/50 rounded-full mix-blend-overlay pointer-events-none animate-ping" })
+            ]
+          })
+        }),
+        e.jsxs("div", {
+          className: "mt-2 sm:mt-2.5 flex flex-col items-center text-center w-full px-1",
+          children: [
+            e.jsx("span", {
+              className: `font-cinzel font-black text-[9.5px] sm:text-xs tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)] truncate w-full ${isPlayer ? 'text-amber-200' : 'text-rose-200'}`,
+              children: name
+            }),
+            e.jsx("span", {
+              className: "font-serif-body italic text-[8px] sm:text-[9px] text-stone-300 drop-shadow
