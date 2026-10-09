@@ -8,7 +8,9 @@
     "start": "node server.js",
     "build": "node scripts/sync_production_build.cjs",
     "preview": "node server.js",
-    "lint": "node -e 'console.log(\"Lint clean\")'"
+    "lint": "node -e 'console.log(\"Lint clean\")'",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@babel/parser": "^8.0.4",
@@ -23,6 +25,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
@@ -31,6 +34,7 @@
     "tailwindcss": "^4.0.0",
     "tsx": "^4.23.15",
     "typescript": "~5.7.2",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^5.0.3"
   }
 }
